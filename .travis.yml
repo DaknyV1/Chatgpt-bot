@@ -1,0 +1,35 @@
+sudo: required
+
+language: python
+python: 3.8
+
+before_install:
+  - sudo rm -rf /var/lib/apt/lists/*
+  - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+  - sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) edge"
+  - sudo apt-get update
+  - sudo apt-get -y -o Dpkg::Options::="--force-confnew" install docker-ce
+  - mkdir -vp ~/.docker/cli-plugins/
+  - curl --silent -L "https://github.com/docker/buildx/releases/download/v0.3.0/buildx-v0.3.0.linux-amd64" > ~/.docker/cli-plugins/docker-buildx
+  - chmod a+x ~/.docker/cli-plugins/docker-buildx
+
+install:
+  - pip3 install -r requirements.txt
+
+script:
+#  - pytest --cov-report term --cov=plugins tests/
+  - docker buildx version
+  - coverage run --source=plugins -m unittest discover tests -v
+  - coverage report
+#  - pytest --cov-report xml:cov.xml --cov=plugins tests/
+
+after_success:
+  - codecov
+
+notifications:
+  email:
+    on_success: always
+    on_failure: always
+  webhooks:
+    on_success: never
+    on_failure: always
